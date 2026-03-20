@@ -198,6 +198,36 @@ public sealed class GraphModelsTests
     }
 
     [TestMethod]
+    public void Deserialize_TaskCollection_ParsesNextLink()
+    {
+        var json = """
+        {
+            "value": [
+                { "id": "task-1", "title": "First", "status": "notStarted", "importance": "low", "isReminderOn": false }
+            ],
+            "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/todo/lists/list-1/tasks?$skip=10"
+        }
+        """;
+
+        var response = JsonSerializer.Deserialize<GraphCollection<TodoTask>>(json);
+
+        Assert.IsNotNull(response);
+        Assert.IsNotNull(response.NextLink);
+        Assert.IsTrue(response.NextLink.Contains("$skip=10"));
+    }
+
+    [TestMethod]
+    public void Deserialize_TaskCollection_NullNextLink_WhenAbsent()
+    {
+        var json = """{ "value": [] }""";
+
+        var response = JsonSerializer.Deserialize<GraphCollection<TodoTask>>(json);
+
+        Assert.IsNotNull(response);
+        Assert.IsNull(response.NextLink);
+    }
+
+    [TestMethod]
     public void Deserialize_EmptyTaskCollection_ReturnsEmptyList()
     {
         var json = """

@@ -8,4 +8,7 @@ public sealed class GraphCollection<T>
 {
     [JsonPropertyName("value")]
     public List<T> Value { get; set; } = [];
+
+    [JsonPropertyName("@odata.nextLink")]
+    public string? NextLink { get; set; }
 }

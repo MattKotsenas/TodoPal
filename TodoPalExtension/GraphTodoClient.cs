@@ -23,14 +23,7 @@ public sealed class GraphTodoClient
 
     public async Task<List<TodoTaskList>> GetTaskListsAsync(CancellationToken cancellationToken = default)
     {
-        using var request = await CreateRequest(HttpMethod.Get, $"{BaseUrl}/me/todo/lists", cancellationToken);
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var collection = await JsonSerializer.DeserializeAsync<GraphCollection<TodoTaskList>>(
-            await response.Content.ReadAsStreamAsync(cancellationToken), s_readOptions, cancellationToken);
-
-        return collection?.Value ?? [];
+        return await GetAllPagesAsync<TodoTaskList>($"{BaseUrl}/me/todo/lists", cancellationToken);
     }
 
     public async Task<List<TodoTask>> GetTasksAsync(string listId, bool includeCompleted = false, CancellationToken cancellationToken = default)
@@ -41,14 +34,7 @@ public sealed class GraphTodoClient
             url += "?$filter=status ne 'completed'";
         }
 
-        using var request = await CreateRequest(HttpMethod.Get, url, cancellationToken);
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var collection = await JsonSerializer.DeserializeAsync<GraphCollection<TodoTask>>(
-            await response.Content.ReadAsStreamAsync(cancellationToken), s_readOptions, cancellationToken);
-
-        return collection?.Value ?? [];
+        return await GetAllPagesAsync<TodoTask>(url, cancellationToken);
     }
 
     public async Task<TodoTask> CreateTaskAsync(string listId, string title, DateOnly? dueDate = null, CancellationToken cancellationToken = default)
@@ -97,5 +83,33 @@ public sealed class GraphTodoClient
         var request = new HttpRequestMessage(method, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return request;
+    }
+
+    private async Task<List<T>> GetAllPagesAsync<T>(string url, CancellationToken cancellationToken)
+    {
+        var allItems = new List<T>();
+        string? nextUrl = url;
+
+        while (nextUrl is not null)
+        {
+            using var request = await CreateRequest(HttpMethod.Get, nextUrl, cancellationToken);
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var collection = await JsonSerializer.DeserializeAsync<GraphCollection<T>>(
+                await response.Content.ReadAsStreamAsync(cancellationToken), s_readOptions, cancellationToken);
+
+            if (collection is not null)
+            {
+                allItems.AddRange(collection.Value);
+                nextUrl = collection.NextLink;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return allItems;
     }
 }

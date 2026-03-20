@@ -220,6 +220,41 @@ public sealed class GraphTodoClientTests
         Assert.AreEqual(HttpStatusCode.Unauthorized, ex.StatusCode);
     }
 
+    [TestMethod]
+    public async Task GetTaskListsAsync_FollowsPagination()
+    {
+        var page1 = """{ "value": [{ "id": "list-1", "displayName": "Tasks" }], "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/todo/lists?$skip=1" }""";
+        var page2 = """{ "value": [{ "id": "list-2", "displayName": "Shopping" }] }""";
+
+        var handler = new FakeHttpHandler(page1);
+        handler.EnqueueResponse(page2);
+        var client = CreateClient(handler);
+
+        var lists = await client.GetTaskListsAsync();
+
+        Assert.HasCount(2, lists);
+        Assert.AreEqual("Tasks", lists[0].DisplayName);
+        Assert.AreEqual("Shopping", lists[1].DisplayName);
+        Assert.HasCount(2, handler.AllRequests);
+    }
+
+    [TestMethod]
+    public async Task GetTasksAsync_FollowsPagination()
+    {
+        var page1 = """{ "value": [{ "id": "task-1", "title": "First", "status": "notStarted" }], "@odata.nextLink": "https://graph.microsoft.com/v1.0/next" }""";
+        var page2 = """{ "value": [{ "id": "task-2", "title": "Second", "status": "notStarted" }] }""";
+
+        var handler = new FakeHttpHandler(page1);
+        handler.EnqueueResponse(page2);
+        var client = CreateClient(handler);
+
+        var tasks = await client.GetTasksAsync("list-1");
+
+        Assert.HasCount(2, tasks);
+        Assert.AreEqual("First", tasks[0].Title);
+        Assert.AreEqual("Second", tasks[1].Title);
+    }
+
     private static GraphTodoClient CreateClient(FakeHttpHandler handler)
     {
         var httpClient = new HttpClient(handler);
@@ -232,29 +267,38 @@ public sealed class GraphTodoClientTests
 /// </summary>
 internal sealed class FakeHttpHandler : HttpMessageHandler
 {
-    private readonly string _responseBody;
-    private readonly HttpStatusCode _statusCode;
+    private readonly Queue<(string body, HttpStatusCode status)> _responses = new();
 
     public HttpRequestMessage? LastRequest { get; private set; }
     public string? LastRequestBody { get; private set; }
+    public List<HttpRequestMessage> AllRequests { get; } = [];
 
     public FakeHttpHandler(string responseBody, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
-        _responseBody = responseBody;
-        _statusCode = statusCode;
+        _responses.Enqueue((responseBody, statusCode));
+    }
+
+    public void EnqueueResponse(string body, HttpStatusCode statusCode = HttpStatusCode.OK)
+    {
+        _responses.Enqueue((body, statusCode));
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         LastRequest = request;
+        AllRequests.Add(request);
         if (request.Content is not null)
         {
             LastRequestBody = await request.Content.ReadAsStringAsync(cancellationToken);
         }
 
-        return new HttpResponseMessage(_statusCode)
+        var (body, status) = _responses.Count > 0
+            ? _responses.Dequeue()
+            : ("", HttpStatusCode.OK);
+
+        return new HttpResponseMessage(status)
         {
-            Content = new StringContent(_responseBody, System.Text.Encoding.UTF8, "application/json")
+            Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json")
         };
     }
 }
