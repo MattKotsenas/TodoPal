@@ -38,7 +38,7 @@ internal sealed partial class AddTaskPage : ContentPage
         _lists = lists;
         _parentPage = parentPage;
 
-        Icon = new IconInfo("\uE710", "Segoe Fluent Icons");
+        Icon = new IconInfo(new FontIconData("\uE710", "Segoe Fluent Icons"));
         Title = "Add a task";
         Name = "Add Task";
 
@@ -96,7 +96,7 @@ internal sealed partial class AddTaskFormContent : FormContent
         _parentPage.Refresh();
     }
 
-    private string BuildTemplate()
+    private static string BuildTemplate()
     {
         return """
         {

@@ -38,7 +38,7 @@ internal sealed partial class TodoPalExtensionPage : ListPage
             {
                 Title = "Add a task",
                 Subtitle = "Create a new task in Microsoft To Do",
-                Icon = new IconInfo("\uE710", "Segoe Fluent Icons") // + icon
+                Icon = new IconInfo(new FontIconData("\uE710", "Segoe Fluent Icons")) // + icon
             });
 
             foreach (var list in lists)
