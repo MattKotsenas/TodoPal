@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "createdAt": "2026-03-20T16:17:07.5392013+00:00",
+  "updatedAt": "2026-03-20T16:17:07.5488216+00:00",
+  "description": "Initial baseline created by 'slopwatch init' on 2026-03-20 16:17:07 UTC",
+  "entries": [
+    {
+      "hash": "b92e9dafc59bc964",
+      "ruleId": "SW002",
+      "filePath": "TodoPalExtension/Models/GraphCollection.cs",
+      "lineNumber": 6,
+      "codeSnippet": "SuppressMessage(\"Naming\", \"CA1711:Identifiers should not have incorrect suffix\", Justification = \"Named after Graph API response shape\")",
+      "message": "SuppressMessage attribute suppressing Naming:CA1711:Identifiers should not have incorrect suffix",
+      "baselinedAt": "2026-03-20T16:17:07.5484651+00:00"
+    },
+    {
+      "hash": "5720ce351693f8ef",
+      "ruleId": "SW005",
+      "filePath": "TodoPalExtension.Tests/TodoPalExtension.Tests.csproj",
+      "lineNumber": 8,
+      "codeSnippet": "<NoWarn>$(NoWarn);CA1707</NoWarn>",
+      "message": "Adding warnings to NoWarn: CA1707",
+      "baselinedAt": "2026-03-20T16:17:07.5488206+00:00"
+    }
+  ]
+}

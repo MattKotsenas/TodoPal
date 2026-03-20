@@ -1,10 +1,13 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TodoPalExtension.Tests;
 
 [TestClass]
 public sealed class GraphModelsTests
 {
+    private static readonly JsonSerializerOptions s_writeOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+
     [TestMethod]
     public void Deserialize_TaskList_ParsesAllFields()
     {
@@ -23,8 +26,8 @@ public sealed class GraphModelsTests
         Assert.IsNotNull(list);
         Assert.AreEqual("AAMkADIyAAAAABrJAAA=", list.Id);
         Assert.AreEqual("Tasks", list.DisplayName);
-        Assert.AreEqual(true, list.IsOwner);
-        Assert.AreEqual(false, list.IsShared);
+        Assert.IsTrue(list.IsOwner);
+        Assert.IsFalse(list.IsShared);
         Assert.AreEqual("defaultList", list.WellknownListName);
     }
 
@@ -55,7 +58,7 @@ public sealed class GraphModelsTests
         var response = JsonSerializer.Deserialize<GraphCollection<TodoTaskList>>(json);
 
         Assert.IsNotNull(response);
-        Assert.AreEqual(2, response.Value.Count);
+        Assert.HasCount(2, response.Value);
         Assert.AreEqual("list-1", response.Value[0].Id);
         Assert.AreEqual("Shopping", response.Value[1].DisplayName);
     }
@@ -189,7 +192,7 @@ public sealed class GraphModelsTests
         var response = JsonSerializer.Deserialize<GraphCollection<TodoTask>>(json);
 
         Assert.IsNotNull(response);
-        Assert.AreEqual(2, response.Value.Count);
+        Assert.HasCount(2, response.Value);
         Assert.AreEqual("First", response.Value[0].Title);
         Assert.AreEqual("completed", response.Value[1].Status);
     }
@@ -206,7 +209,7 @@ public sealed class GraphModelsTests
         var response = JsonSerializer.Deserialize<GraphCollection<TodoTask>>(json);
 
         Assert.IsNotNull(response);
-        Assert.AreEqual(0, response.Value.Count);
+        Assert.IsEmpty(response.Value);
     }
 
     [TestMethod]
@@ -259,8 +262,7 @@ public sealed class GraphModelsTests
             Status = "completed"
         };
 
-        var options = new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
-        var json = JsonSerializer.Serialize(task, options);
+        var json = JsonSerializer.Serialize(task, s_writeOptions);
         var doc = JsonDocument.Parse(json);
 
         Assert.AreEqual("completed", doc.RootElement.GetProperty("status").GetString());

@@ -5,10 +5,15 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MSTest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\TodoPalExtension\Models\*.cs" Link="Models\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
