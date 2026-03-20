@@ -24,10 +24,7 @@ jobs:
       run: dotnet restore
 
     - name: Build Extension
-      # TODO: Switch to Release once we add a System.Text.Json source generator to fix IL2026/IL3050 trim+AOT warnings.
-      # Currently Debug is used because Release enables PublishTrimmed + ILLinkTreatWarningsAsErrors, which promotes
-      # the reflection-based JSON serialization warnings to errors.
-      run: dotnet publish TodoPalExtension --no-restore -r win-x64 -c Debug -p:ContinuousIntegrationBuild=true
+      run: dotnet publish TodoPalExtension --no-restore -r win-x64 -c Release -p:ContinuousIntegrationBuild=true
 
     - name: Build Tests
       run: dotnet build TodoPalExtension.Tests --no-restore -p:ContinuousIntegrationBuild=true

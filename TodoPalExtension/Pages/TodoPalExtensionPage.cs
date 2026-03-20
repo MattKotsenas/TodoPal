@@ -118,7 +118,10 @@ internal sealed partial class TodoPalExtensionPage : ListPage
     private async Task<GraphTodoClient> CreateClientAsync()
     {
         var token = await _authService.GetAccessTokenAsync();
-        return new GraphTodoClient(new HttpClient(), () => _authService.GetAccessTokenAsync());
+        return new GraphTodoClient(
+            new HttpClient(),
+            () => _authService.GetAccessTokenAsync(),
+            TodoPalJsonContext.Default.Options);
     }
 
     internal void Refresh()

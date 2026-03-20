@@ -1,29 +1,39 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace TodoPalExtension;
 
 public sealed class GraphTodoClient
 {
-    private static readonly JsonSerializerOptions s_readOptions = new() { PropertyNameCaseInsensitive = true };
-    private static readonly JsonSerializerOptions s_writeOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
-
     private const string BaseUrl = "https://graph.microsoft.com/v1.0";
 
     private readonly HttpClient _httpClient;
     private readonly Func<Task<string>> _getAccessToken;
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public GraphTodoClient(HttpClient httpClient, Func<Task<string>> getAccessToken)
+    // The DefaultJsonTypeInfoResolver fallback is only used by the test project (plain net9.0, no trimming).
+    // The extension always passes TodoPalJsonContext.Default.Options which is source-generated.
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Fallback resolver only used in tests, not in trimmed extension")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Fallback resolver only used in tests, not in trimmed extension")]
+    public GraphTodoClient(HttpClient httpClient, Func<Task<string>> getAccessToken, JsonSerializerOptions? jsonOptions = null)
     {
         _httpClient = httpClient;
         _getAccessToken = getAccessToken;
+        _jsonOptions = jsonOptions ?? new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()
+        };
     }
 
     public async Task<List<TodoTaskList>> GetTaskListsAsync(CancellationToken cancellationToken = default)
     {
-        return await GetAllPagesAsync<TodoTaskList>($"{BaseUrl}/me/todo/lists", cancellationToken);
+        return await GetAllPagesAsync($"{BaseUrl}/me/todo/lists", GetTypeInfo<GraphCollection<TodoTaskList>>(), cancellationToken);
     }
 
     public async Task<List<TodoTask>> GetTasksAsync(string listId, bool includeCompleted = false, CancellationToken cancellationToken = default)
@@ -34,7 +44,7 @@ public sealed class GraphTodoClient
             url += "?$filter=status ne 'completed'";
         }
 
-        return await GetAllPagesAsync<TodoTask>(url, cancellationToken);
+        return await GetAllPagesAsync(url, GetTypeInfo<GraphCollection<TodoTask>>(), cancellationToken);
     }
 
     public async Task<TodoTask> CreateTaskAsync(string listId, string title, DateOnly? dueDate = null, CancellationToken cancellationToken = default)
@@ -51,13 +61,14 @@ public sealed class GraphTodoClient
         }
 
         using var request = await CreateRequest(HttpMethod.Post, $"{BaseUrl}/me/todo/lists/{listId}/tasks", cancellationToken);
-        request.Content = new StringContent(JsonSerializer.Serialize(body, s_writeOptions), Encoding.UTF8, "application/json");
+        var taskTypeInfo = GetTypeInfo<TodoTask>();
+        request.Content = new StringContent(JsonSerializer.Serialize(body, taskTypeInfo), Encoding.UTF8, "application/json");
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        return (await JsonSerializer.DeserializeAsync<TodoTask>(
-            await response.Content.ReadAsStreamAsync(cancellationToken), s_readOptions, cancellationToken))!;
+        return (await JsonSerializer.DeserializeAsync(
+            await response.Content.ReadAsStreamAsync(cancellationToken), taskTypeInfo, cancellationToken))!;
     }
 
     public Task CompleteTaskAsync(string listId, string taskId, CancellationToken cancellationToken = default)
@@ -70,7 +81,7 @@ public sealed class GraphTodoClient
     {
         using var request = await CreateRequest(HttpMethod.Patch, $"{BaseUrl}/me/todo/lists/{listId}/tasks/{taskId}", cancellationToken);
         request.Content = new StringContent(
-            JsonSerializer.Serialize(new TodoTask { Status = status }, s_writeOptions),
+            JsonSerializer.Serialize(new TodoTask { Status = status }, GetTypeInfo<TodoTask>()),
             Encoding.UTF8, "application/json");
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -85,7 +96,7 @@ public sealed class GraphTodoClient
         return request;
     }
 
-    private async Task<List<T>> GetAllPagesAsync<T>(string url, CancellationToken cancellationToken)
+    private async Task<List<T>> GetAllPagesAsync<T>(string url, JsonTypeInfo<GraphCollection<T>> typeInfo, CancellationToken cancellationToken)
     {
         var allItems = new List<T>();
         string? nextUrl = url;
@@ -96,8 +107,8 @@ public sealed class GraphTodoClient
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            var collection = await JsonSerializer.DeserializeAsync<GraphCollection<T>>(
-                await response.Content.ReadAsStreamAsync(cancellationToken), s_readOptions, cancellationToken);
+            var collection = await JsonSerializer.DeserializeAsync(
+                await response.Content.ReadAsStreamAsync(cancellationToken), typeInfo, cancellationToken);
 
             if (collection is not null)
             {
@@ -111,5 +122,12 @@ public sealed class GraphTodoClient
         }
 
         return allItems;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Type info is resolved from source-generated context when available")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Type info is resolved from source-generated context when available")]
+    private JsonTypeInfo<T> GetTypeInfo<T>()
+    {
+        return (JsonTypeInfo<T>)_jsonOptions.GetTypeInfo(typeof(T));
     }
 }
