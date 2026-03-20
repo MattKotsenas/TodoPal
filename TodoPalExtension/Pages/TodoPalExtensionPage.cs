@@ -14,7 +14,7 @@ internal sealed partial class TodoPalExtensionPage : ListPage
 
     public TodoPalExtensionPage()
     {
-        Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
+        Icon = new IconInfo(new FontIconData("\uE73E", "Segoe Fluent Icons")); // checkmark icon
         Title = "TodoPal";
         Name = "Open";
     }
@@ -194,7 +194,12 @@ internal sealed partial class ToggleCompleteCommand : InvokableCommand
         _listId = listId;
         _task = task;
         _page = page;
-        Name = task.Status == "completed" ? "Mark incomplete" : "Mark complete";
+
+        var isCompleted = task.Status == "completed";
+        Name = isCompleted ? "Mark incomplete" : "Mark complete";
+        Icon = isCompleted
+            ? new IconInfo(new FontIconData("\uE73E", "Segoe Fluent Icons"))  // filled checkmark
+            : new IconInfo(new FontIconData("\uF136", "Segoe Fluent Icons")); // empty circle
     }
 
     public override ICommandResult Invoke()
