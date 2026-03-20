@@ -13,7 +13,7 @@ public partial class TodoPalExtensionCommandsProvider : CommandProvider
 
     public TodoPalExtensionCommandsProvider()
     {
-        DisplayName = "Microsoft To Do";
+        DisplayName = "TodoPal";
         Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
         _commands = [
             new CommandItem(new TodoPalExtensionPage()) { Title = DisplayName },

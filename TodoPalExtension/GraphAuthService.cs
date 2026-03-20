@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 
@@ -5,7 +6,9 @@ namespace TodoPalExtension;
 
 public sealed class GraphAuthService
 {
-    private const string ClientId = "14d82eec-204b-4c2f-b7e8-296a70dab67e";
+    // Microsoft Office first-party client ID. Pre-approved in most M365 tenants,
+    // avoiding the "admin approval required" prompt that less common client IDs trigger.
+    private const string ClientId = "d3590ed6-52b3-4102-aeff-aad2292ab01c";
     private static readonly string[] s_scopes = ["Tasks.ReadWrite"];
 
     private readonly IPublicClientApplication _app;
@@ -33,7 +36,7 @@ public sealed class GraphAuthService
         {
             // No cached token - need interactive auth via WAM
             var result = await _app.AcquireTokenInteractive(s_scopes)
-                .WithParentActivityOrWindow(GetConsoleWindowHandle())
+                .WithParentActivityOrWindow(GetForegroundWindow())
                 .ExecuteAsync(cancellationToken);
             return result.AccessToken;
         }
@@ -54,8 +57,6 @@ public sealed class GraphAuthService
         return accounts.Any();
     }
 
-    private static nint GetConsoleWindowHandle()
-    {
-        return System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
-    }
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
 }

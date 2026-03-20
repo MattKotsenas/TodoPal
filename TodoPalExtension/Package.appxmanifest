@@ -16,7 +16,7 @@
        Publisher= to match your own identity -->
 
   <Properties>
-    <DisplayName>Microsoft To Do</DisplayName>
+    <DisplayName>TodoPal</DisplayName>
     <PublisherDisplayName>A Lone Developer</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -35,8 +35,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Microsoft To Do"
-        Description="Microsoft To Do"
+        DisplayName="TodoPal"
+        Description="A CmdPal extension for Microsoft To Do"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
@@ -46,8 +46,8 @@
       <Extensions>
         <com:Extension Category="windows.comServer">
           <com:ComServer>
-            <com:ExeServer Executable="TodoPalExtension.exe" Arguments="-RegisterProcessAsComServer" DisplayName="Microsoft To Do">
-              <com:Class Id="20aa6ae7-73c5-4e6d-a0b6-1010693d75e1" DisplayName="Microsoft To Do" />
+            <com:ExeServer Executable="TodoPalExtension.exe" Arguments="-RegisterProcessAsComServer" DisplayName="TodoPal">
+              <com:Class Id="20aa6ae7-73c5-4e6d-a0b6-1010693d75e1" DisplayName="TodoPal" />
             </com:ExeServer>
           </com:ComServer>
         </com:Extension>
@@ -55,8 +55,8 @@
           <uap3:AppExtension Name="com.microsoft.commandpalette"
             Id="ID"
             PublicFolder="Public"
-            DisplayName="Microsoft To Do"
-            Description="Microsoft To Do">
+            DisplayName="TodoPal"
+            Description="A CmdPal extension for Microsoft To Do">
             <uap3:Properties>
               <CmdPalProvider>
                 <Activation>
