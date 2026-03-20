@@ -24,7 +24,7 @@ jobs:
       run: dotnet restore
 
     - name: Build Extension
-      run: dotnet publish TodoPalExtension --no-restore -r win-x64 -p:ContinuousIntegrationBuild=true
+      run: dotnet publish TodoPalExtension --no-restore -r win-x64 -c Debug -p:ContinuousIntegrationBuild=true
 
     - name: Build Tests
       run: dotnet build TodoPalExtension.Tests --no-restore -p:ContinuousIntegrationBuild=true
