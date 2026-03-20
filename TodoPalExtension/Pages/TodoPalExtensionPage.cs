@@ -53,11 +53,15 @@ internal sealed partial class TodoPalExtensionPage : ListPage
                     var subtitle = FormatSubtitle(task, list);
                     var command = new ToggleCompleteCommand(_client, list.Id, task, this);
 
+                    var section = IsDueToday(task)
+                        ? "Due Today"
+                        : list.DisplayName ?? "Tasks";
+
                     var item = new ListItem(command)
                     {
                         Title = task.Title,
                         Subtitle = subtitle,
-                        Section = list.DisplayName ?? "Tasks",
+                        Section = section,
                         Tags = GetTags(task)
                     };
 
@@ -65,7 +69,8 @@ internal sealed partial class TodoPalExtensionPage : ListPage
                 }
             }
 
-            _items = [.. items];
+            // Sort so "Due Today" appears first
+            _items = [.. items.OrderBy(i => ((ListItem)i).Section == "Due Today" ? 0 : 1)];
         }
         catch (HttpRequestException)
         {
@@ -109,6 +114,13 @@ internal sealed partial class TodoPalExtensionPage : ListPage
         }
 
         return string.Join(" · ", parts);
+    }
+
+    private static bool IsDueToday(TodoTask task)
+    {
+        return task.DueDateTime?.DateTime is { } due
+            && DateTime.TryParse(due, out var dueDate)
+            && dueDate.Date == DateTime.Today;
     }
 
     private static ITag[] GetTags(TodoTask task)
