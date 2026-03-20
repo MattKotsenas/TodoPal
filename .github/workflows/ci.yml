@@ -23,8 +23,11 @@ jobs:
     - name: Restore
       run: dotnet restore
 
-    - name: Build
-      run: dotnet build --no-restore -r win-x64 -p:ContinuousIntegrationBuild=true
+    - name: Build Extension
+      run: dotnet build TodoPalExtension --no-restore -r win-x64 -p:ContinuousIntegrationBuild=true
+
+    - name: Build Tests
+      run: dotnet build TodoPalExtension.Tests --no-restore -p:ContinuousIntegrationBuild=true
 
     - name: Test
-      run: dotnet test --no-build -r win-x64 --verbosity normal
+      run: dotnet test TodoPalExtension.Tests --no-build --verbosity normal
