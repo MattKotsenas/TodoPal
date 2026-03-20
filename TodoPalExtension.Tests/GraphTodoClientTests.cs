@@ -167,7 +167,7 @@ public sealed class GraphTodoClientTests
         var handler = new FakeHttpHandler("", HttpStatusCode.Unauthorized);
         var client = CreateClient(handler);
 
-        await Assert.ThrowsExceptionAsync<HttpRequestException>(() => client.GetTaskListsAsync());
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.GetTaskListsAsync());
     }
 
     private static GraphTodoClient CreateClient(FakeHttpHandler handler)
