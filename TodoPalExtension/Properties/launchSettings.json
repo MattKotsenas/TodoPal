@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "TodoPalExtension (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "TodoPalExtension (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
