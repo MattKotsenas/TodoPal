@@ -17,9 +17,15 @@ internal sealed partial class TodoPalExtensionPage : ListPage
         Name = "Open";
     }
 
+    private bool _isLoaded;
+
     public override IListItem[] GetItems()
     {
-        _ = LoadItemsAsync();
+        if (!_isLoaded)
+        {
+            _isLoaded = true;
+            _ = LoadItemsAsync();
+        }
         return _items;
     }
 
@@ -72,7 +78,7 @@ internal sealed partial class TodoPalExtensionPage : ListPage
             // Sort so "Due Today" appears first
             _items = [.. items.OrderBy(i => ((ListItem)i).Section == "Due Today" ? 0 : 1)];
         }
-        catch (HttpRequestException)
+        catch (Exception)
         {
             _items = [new ListItem(new SignInCommand(_authService, this))
             {
@@ -95,6 +101,7 @@ internal sealed partial class TodoPalExtensionPage : ListPage
 
     internal void Refresh()
     {
+        _isLoaded = false;
         _items = [];
         RaiseItemsChanged(0);
     }
