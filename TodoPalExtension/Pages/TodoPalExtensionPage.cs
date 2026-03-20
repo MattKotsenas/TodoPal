@@ -11,6 +11,7 @@ internal sealed partial class TodoPalExtensionPage : ListPage
     private readonly GraphAuthService _authService = new();
     private GraphTodoClient? _client;
     private IListItem[] _items = [];
+    private CancellationTokenSource? _loadCts;
 
     public TodoPalExtensionPage()
     {
@@ -19,24 +20,25 @@ internal sealed partial class TodoPalExtensionPage : ListPage
         Name = "Open";
     }
 
-    private bool _isLoaded;
-
     public override IListItem[] GetItems()
     {
-        if (!_isLoaded)
+        if (_loadCts is null)
         {
-            _isLoaded = true;
-            _ = LoadItemsAsync();
+            _loadCts = new CancellationTokenSource();
+            _ = LoadItemsAsync(_loadCts);
         }
         return _items;
     }
 
-    private async Task LoadItemsAsync()
+    private async Task LoadItemsAsync(CancellationTokenSource loadCts)
     {
         IsLoading = true;
         try
         {
+            var ct = loadCts.Token;
             _client ??= await CreateClientAsync();
+
+            ct.ThrowIfCancellationRequested();
 
             var lists = await _client.GetTaskListsAsync();
             var items = new List<IListItem>();
@@ -53,6 +55,8 @@ internal sealed partial class TodoPalExtensionPage : ListPage
             foreach (var list in lists)
             {
                 if (list.Id is null) continue;
+
+                ct.ThrowIfCancellationRequested();
 
                 var tasks = await _client.GetTasksAsync(list.Id);
                 foreach (var task in tasks)
@@ -78,6 +82,8 @@ internal sealed partial class TodoPalExtensionPage : ListPage
                 }
             }
 
+            ct.ThrowIfCancellationRequested();
+
             // Sort so "Due Today" appears first
             _items = [.. items.OrderBy(i => ((ListItem)i).Section == "Due Today" ? 0 : 1)];
         }
@@ -101,7 +107,8 @@ internal sealed partial class TodoPalExtensionPage : ListPage
         }
         catch (OperationCanceledException)
         {
-            // Normal cancellation, don't show an error
+            // Cancelled because a newer load superseded this one - don't touch _items
+            return;
         }
         catch (Exception ex)
         {
@@ -110,8 +117,12 @@ internal sealed partial class TodoPalExtensionPage : ListPage
         }
         finally
         {
-            IsLoading = false;
-            RaiseItemsChanged(_items.Length);
+            // Only update loading state if this is still the current load
+            if (_loadCts == loadCts)
+            {
+                IsLoading = false;
+                RaiseItemsChanged(_items.Length);
+            }
         }
     }
 
@@ -126,9 +137,13 @@ internal sealed partial class TodoPalExtensionPage : ListPage
 
     internal void Refresh()
     {
-        _isLoaded = false;
+        var oldCts = _loadCts;
+        _loadCts = new CancellationTokenSource();
+        oldCts?.Cancel();
+        oldCts?.Dispose();
         _items = [];
         RaiseItemsChanged(0);
+        _ = LoadItemsAsync(_loadCts);
     }
 
     internal void ShowError(string message)
