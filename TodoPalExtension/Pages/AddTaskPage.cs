@@ -51,28 +51,35 @@ internal sealed partial class AddTaskFormContent : FormContent
 
     private async Task CreateTaskAsync(string inputsJson)
     {
-        using var doc = JsonDocument.Parse(inputsJson);
-        var root = doc.RootElement;
-
-        var title = root.GetProperty("title").GetString();
-        if (string.IsNullOrWhiteSpace(title)) return;
-
-        DateOnly? dueDate = null;
-        if (root.TryGetProperty("dueDate", out var dueDateEl))
+        try
         {
-            var dueDateStr = dueDateEl.GetString();
-            if (!string.IsNullOrEmpty(dueDateStr) && DateOnly.TryParse(dueDateStr, out var parsed))
+            using var doc = JsonDocument.Parse(inputsJson);
+            var root = doc.RootElement;
+
+            var title = root.GetProperty("title").GetString();
+            if (string.IsNullOrWhiteSpace(title)) return;
+
+            DateOnly? dueDate = null;
+            if (root.TryGetProperty("dueDate", out var dueDateEl))
             {
-                dueDate = parsed;
+                var dueDateStr = dueDateEl.GetString();
+                if (!string.IsNullOrEmpty(dueDateStr) && DateOnly.TryParse(dueDateStr, out var parsed))
+                {
+                    dueDate = parsed;
+                }
             }
+
+            // Find the default list (or first list)
+            var targetList = _lists.FirstOrDefault(l => l.WellknownListName == "defaultList") ?? _lists.FirstOrDefault();
+            if (targetList?.Id is null) return;
+
+            await _client.CreateTaskAsync(targetList.Id, title, dueDate);
+            _parentPage.Refresh();
         }
-
-        // Find the default list (or first list)
-        var targetList = _lists.FirstOrDefault(l => l.WellknownListName == "defaultList") ?? _lists.FirstOrDefault();
-        if (targetList?.Id is null) return;
-
-        await _client.CreateTaskAsync(targetList.Id, title, dueDate);
-        _parentPage.Refresh();
+        catch (Exception ex)
+        {
+            _parentPage.ShowError($"Failed to create task: {ex.Message}");
+        }
     }
 
     private static string BuildTemplate()

@@ -170,6 +170,43 @@ public sealed class GraphTodoClientTests
         await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.GetTaskListsAsync());
     }
 
+    [TestMethod]
+    public async Task GetTasksAsync_HttpError_ThrowsHttpRequestException()
+    {
+        var handler = new FakeHttpHandler("", HttpStatusCode.InternalServerError);
+        var client = CreateClient(handler);
+
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.GetTasksAsync("list-1"));
+    }
+
+    [TestMethod]
+    public async Task CompleteTaskAsync_HttpError_ThrowsHttpRequestException()
+    {
+        var handler = new FakeHttpHandler("", HttpStatusCode.NotFound);
+        var client = CreateClient(handler);
+
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.CompleteTaskAsync("list-1", "task-1"));
+    }
+
+    [TestMethod]
+    public async Task CreateTaskAsync_HttpError_ThrowsHttpRequestException()
+    {
+        var handler = new FakeHttpHandler("", HttpStatusCode.Forbidden);
+        var client = CreateClient(handler);
+
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.CreateTaskAsync("list-1", "Test"));
+    }
+
+    [TestMethod]
+    public async Task GetTaskListsAsync_Unauthorized_IncludesStatusCode()
+    {
+        var handler = new FakeHttpHandler("", HttpStatusCode.Unauthorized);
+        var client = CreateClient(handler);
+
+        var ex = await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.GetTaskListsAsync());
+        Assert.AreEqual(HttpStatusCode.Unauthorized, ex.StatusCode);
+    }
+
     private static GraphTodoClient CreateClient(FakeHttpHandler handler)
     {
         var httpClient = new HttpClient(handler);

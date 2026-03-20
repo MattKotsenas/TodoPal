@@ -1,6 +1,8 @@
+using System.Net;
 using System.Text.Json;
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
+using Microsoft.Identity.Client;
 
 namespace TodoPalExtension;
 
@@ -79,13 +81,32 @@ internal sealed partial class TodoPalExtensionPage : ListPage
             // Sort so "Due Today" appears first
             _items = [.. items.OrderBy(i => ((ListItem)i).Section == "Due Today" ? 0 : 1)];
         }
-        catch (Exception)
+        catch (MsalUiRequiredException)
         {
             _items = [new ListItem(new SignInCommand(_authService, this))
             {
                 Title = "Sign in to Microsoft To Do",
                 Subtitle = "Connect your Microsoft account to view tasks"
             }];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            // Token expired or revoked - need to re-authenticate
+            _client = null;
+            _items = [new ListItem(new SignInCommand(_authService, this))
+            {
+                Title = "Sign in to Microsoft To Do",
+                Subtitle = "Session expired - please sign in again"
+            }];
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal cancellation, don't show an error
+        }
+        catch (Exception ex)
+        {
+            ShowError($"Failed to load tasks: {ex.Message}");
+            return;
         }
         finally
         {
@@ -105,6 +126,17 @@ internal sealed partial class TodoPalExtensionPage : ListPage
         _isLoaded = false;
         _items = [];
         RaiseItemsChanged(0);
+    }
+
+    internal void ShowError(string message)
+    {
+        _items = [new ListItem(new NoOpCommand())
+        {
+            Title = "Error",
+            Subtitle = message,
+            Icon = new IconInfo(new FontIconData("\uE783", "Segoe Fluent Icons")) // warning icon
+        }];
+        RaiseItemsChanged(_items.Length);
     }
 
     private static string FormatSubtitle(TodoTask task, TodoTaskList list)
@@ -168,18 +200,25 @@ internal sealed partial class ToggleCompleteCommand : InvokableCommand
 
     private async Task ToggleAsync()
     {
-        if (_task.Id is null) return;
-
-        if (_task.Status == "completed")
+        try
         {
-            await _client.UncompleteTaskAsync(_listId, _task.Id);
-        }
-        else
-        {
-            await _client.CompleteTaskAsync(_listId, _task.Id);
-        }
+            if (_task.Id is null) return;
 
-        _page.Refresh();
+            if (_task.Status == "completed")
+            {
+                await _client.UncompleteTaskAsync(_listId, _task.Id);
+            }
+            else
+            {
+                await _client.CompleteTaskAsync(_listId, _task.Id);
+            }
+
+            _page.Refresh();
+        }
+        catch (Exception ex)
+        {
+            _page.ShowError($"Failed to update task: {ex.Message}");
+        }
     }
 }
 
@@ -203,7 +242,18 @@ internal sealed partial class SignInCommand : InvokableCommand
 
     private async Task SignInAsync()
     {
-        await _authService.GetAccessTokenAsync();
-        _page.Refresh();
+        try
+        {
+            await _authService.GetAccessTokenAsync();
+            _page.Refresh();
+        }
+        catch (MsalClientException ex) when (ex.ErrorCode == "authentication_canceled")
+        {
+            // User cancelled the auth dialog, nothing to do
+        }
+        catch (Exception ex)
+        {
+            _page.ShowError($"Sign-in failed: {ex.Message}");
+        }
     }
 }
