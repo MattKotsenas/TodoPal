@@ -6,7 +6,7 @@ using Microsoft.Identity.Client;
 
 namespace TodoPalExtension;
 
-internal sealed partial class TodoPalExtensionPage : ListPage
+internal sealed partial class TodoPalExtensionPage : ListPage, IDisposable
 {
     private readonly GraphAuthService _authService = new();
     private GraphTodoClient? _client;
@@ -144,6 +144,12 @@ internal sealed partial class TodoPalExtensionPage : ListPage
         _items = [];
         RaiseItemsChanged(0);
         _ = LoadItemsAsync(_loadCts);
+    }
+
+    public void Dispose()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
     }
 
     internal void ShowError(string message)
