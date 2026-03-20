@@ -4,27 +4,6 @@ using Microsoft.CommandPalette.Extensions.Toolkit;
 
 namespace TodoPalExtension;
 
-internal sealed partial class AddTaskCommand : InvokableCommand
-{
-    private readonly GraphTodoClient _client;
-    private readonly List<TodoTaskList> _lists;
-    private readonly TodoPalExtensionPage _page;
-
-    public AddTaskCommand(GraphTodoClient client, List<TodoTaskList> lists, TodoPalExtensionPage page)
-    {
-        _client = client;
-        _lists = lists;
-        _page = page;
-        Name = "Add a task";
-    }
-
-    public override ICommandResult Invoke()
-    {
-        var addTaskPage = new AddTaskPage(_client, _lists, _page);
-        return CommandResult.GoToPage(new GoToPageArgs() { PageId = addTaskPage.Id });
-    }
-}
-
 internal sealed partial class AddTaskPage : ContentPage
 {
     private readonly GraphTodoClient _client;

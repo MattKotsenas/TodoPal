@@ -13,7 +13,7 @@ internal sealed partial class TodoPalExtensionPage : ListPage
     public TodoPalExtensionPage()
     {
         Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
-        Title = "Microsoft To Do";
+        Title = "TodoPal";
         Name = "Open";
     }
 
@@ -39,8 +39,9 @@ internal sealed partial class TodoPalExtensionPage : ListPage
             var lists = await _client.GetTaskListsAsync();
             var items = new List<IListItem>();
 
-            // "Add Task" command at the top
-            items.Add(new ListItem(new AddTaskCommand(_client, lists, this))
+            // "Add Task" command at the top - wrap the ContentPage directly
+            // so CmdPal navigates to it natively (no GoToPage resolution needed)
+            items.Add(new ListItem(new AddTaskPage(_client, lists, this))
             {
                 Title = "Add a task",
                 Subtitle = "Create a new task in Microsoft To Do",
