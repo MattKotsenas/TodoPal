@@ -1,9 +1,27 @@
 {
   "version": 1,
-  "createdAt": "2026-03-20T16:17:07.5392013+00:00",
-  "updatedAt": "2026-03-20T16:17:07.5488216+00:00",
-  "description": "Initial baseline created by 'slopwatch init' on 2026-03-20 16:17:07 UTC",
+  "createdAt": "2026-03-20T23:25:27.1521284+00:00",
+  "updatedAt": "2026-03-20T23:25:27.1557281+00:00",
+  "description": "Initial baseline created by 'slopwatch init' on 2026-03-20 23:25:27 UTC",
   "entries": [
+    {
+      "hash": "25beb739eeae433f",
+      "ruleId": "SW002",
+      "filePath": "TodoPalExtension/GraphTodoClient.cs",
+      "lineNumber": 127,
+      "codeSnippet": "UnconditionalSuppressMessage(\"Trimming\", \"IL2026\", Justification = \"Type info is resolved from source-generated context when available\")",
+      "message": "SuppressMessage attribute suppressing Trimming:IL2026",
+      "baselinedAt": "2026-03-20T23:25:27.1555942+00:00"
+    },
+    {
+      "hash": "fe95ce9af9c64e1b",
+      "ruleId": "SW002",
+      "filePath": "TodoPalExtension/GraphTodoClient.cs",
+      "lineNumber": 128,
+      "codeSnippet": "UnconditionalSuppressMessage(\"AOT\", \"IL3050\", Justification = \"Type info is resolved from source-generated context when available\")",
+      "message": "SuppressMessage attribute suppressing AOT:IL3050",
+      "baselinedAt": "2026-03-20T23:25:27.1557005+00:00"
+    },
     {
       "hash": "b92e9dafc59bc964",
       "ruleId": "SW002",
@@ -11,7 +29,16 @@
       "lineNumber": 6,
       "codeSnippet": "SuppressMessage(\"Naming\", \"CA1711:Identifiers should not have incorrect suffix\", Justification = \"Named after Graph API response shape\")",
       "message": "SuppressMessage attribute suppressing Naming:CA1711:Identifiers should not have incorrect suffix",
-      "baselinedAt": "2026-03-20T16:17:07.5484651+00:00"
+      "baselinedAt": "2026-03-20T23:25:27.1557062+00:00"
+    },
+    {
+      "hash": "fea8940e65fbf6ed",
+      "ruleId": "SW003",
+      "filePath": "TodoPalExtension/Pages/TodoPalExtensionPage.cs",
+      "lineNumber": 278,
+      "codeSnippet": "catch (MsalClientException ex) when (ex.ErrorCode == \"authentication_canceled\")\r\n        {\r\n            // User cancelled the auth dialog, nothing to do\r\n        }",
+      "message": "Empty catch block swallows exceptions without handling",
+      "baselinedAt": "2026-03-20T23:25:27.1557215+00:00"
     },
     {
       "hash": "5720ce351693f8ef",
@@ -20,7 +47,7 @@
       "lineNumber": 8,
       "codeSnippet": "<NoWarn>$(NoWarn);CA1707</NoWarn>",
       "message": "Adding warnings to NoWarn: CA1707",
-      "baselinedAt": "2026-03-20T16:17:07.5488206+00:00"
+      "baselinedAt": "2026-03-20T23:25:27.1557277+00:00"
     }
   ]
 }
