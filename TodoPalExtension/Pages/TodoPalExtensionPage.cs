@@ -143,6 +143,11 @@ internal sealed partial class TodoPalExtensionPage : ListPage
     {
         var parts = new List<string>();
 
+        if (list.DisplayName is { } name)
+        {
+            parts.Add(name);
+        }
+
         if (task.DueDateTime?.DateTime is { } due && DateTime.TryParse(due, out var dueDate))
         {
             parts.Add($"Due {dueDate:MMM d}");

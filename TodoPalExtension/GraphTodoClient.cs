@@ -33,9 +33,15 @@ public sealed class GraphTodoClient
         return collection?.Value ?? [];
     }
 
-    public async Task<List<TodoTask>> GetTasksAsync(string listId, CancellationToken cancellationToken = default)
+    public async Task<List<TodoTask>> GetTasksAsync(string listId, bool includeCompleted = false, CancellationToken cancellationToken = default)
     {
-        using var request = await CreateRequest(HttpMethod.Get, $"{BaseUrl}/me/todo/lists/{listId}/tasks", cancellationToken);
+        var url = $"{BaseUrl}/me/todo/lists/{listId}/tasks";
+        if (!includeCompleted)
+        {
+            url += "?$filter=status ne 'completed'";
+        }
+
+        using var request = await CreateRequest(HttpMethod.Get, url, cancellationToken);
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 

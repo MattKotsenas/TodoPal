@@ -73,6 +73,19 @@ public sealed class GraphTodoClientTests
 
         await client.GetTasksAsync("list-abc");
 
+        var uri = handler.LastRequest!.RequestUri!.ToString();
+        Assert.IsTrue(uri.StartsWith("https://graph.microsoft.com/v1.0/me/todo/lists/list-abc/tasks?"), uri);
+        Assert.IsTrue(uri.Contains("filter=status"), uri);
+    }
+
+    [TestMethod]
+    public async Task GetTasksAsync_IncludeCompleted_NoFilter()
+    {
+        var handler = new FakeHttpHandler("""{ "value": [] }""");
+        var client = CreateClient(handler);
+
+        await client.GetTasksAsync("list-abc", includeCompleted: true);
+
         Assert.AreEqual("https://graph.microsoft.com/v1.0/me/todo/lists/list-abc/tasks", handler.LastRequest!.RequestUri!.ToString());
     }
 
