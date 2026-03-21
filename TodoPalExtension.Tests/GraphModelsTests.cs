@@ -298,4 +298,17 @@ public sealed class GraphModelsTests
         Assert.AreEqual("completed", doc.RootElement.GetProperty("status").GetString());
         Assert.IsFalse(doc.RootElement.TryGetProperty("id", out _), "Null id should be omitted");
     }
+
+    [TestMethod]
+    public void Serialize_TaskStatusUpdate_SourceGenContext_ContainsOnlyStatus()
+    {
+        var task = new TodoTask { Status = "completed" };
+
+        var json = JsonSerializer.Serialize(task, TodoPalJsonContext.Default.TodoTask);
+        var doc = JsonDocument.Parse(json);
+        var properties = doc.RootElement.EnumerateObject().Select(p => p.Name).ToList();
+
+        CollectionAssert.AreEquivalent(new[] { "status" }, properties,
+            $"Source-gen serialization should contain only 'status' but contained: {string.Join(", ", properties)}");
+    }
 }

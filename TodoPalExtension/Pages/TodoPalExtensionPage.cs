@@ -152,6 +152,17 @@ internal sealed partial class TodoPalExtensionPage : ListPage, IDisposable
         _loadCts?.Dispose();
     }
 
+    /// <summary>
+    /// Removes a specific item from the current list without re-fetching from the server.
+    /// Used after mutations (e.g., completing a task) to avoid Graph API eventual consistency
+    /// returning stale data on immediate re-query.
+    /// </summary>
+    internal void RemoveItem(ICommand command)
+    {
+        _items = _items.Where(i => ((ListItem)i).Command != command).ToArray();
+        RaiseItemsChanged(_items.Length);
+    }
+
     internal void ShowError(string message)
     {
         _items = [new ListItem(new NoOpCommand())
@@ -241,13 +252,15 @@ internal sealed partial class ToggleCompleteCommand : InvokableCommand
             if (_task.Status == "completed")
             {
                 await _client.UncompleteTaskAsync(_listId, _task.Id);
+                _page.Refresh();
             }
             else
             {
                 await _client.CompleteTaskAsync(_listId, _task.Id);
+                // Remove locally instead of re-fetching to avoid Graph API eventual consistency
+                // returning stale data on immediate re-query.
+                _page.RemoveItem(this);
             }
-
-            _page.Refresh();
         }
         catch (Exception ex)
         {

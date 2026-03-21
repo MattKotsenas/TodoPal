@@ -79,13 +79,24 @@ public sealed class GraphTodoClient
 
     private async Task UpdateTaskStatusAsync(string listId, string taskId, string status, CancellationToken cancellationToken)
     {
-        using var request = await CreateRequest(HttpMethod.Patch, $"{BaseUrl}/me/todo/lists/{listId}/tasks/{taskId}", cancellationToken);
-        request.Content = new StringContent(
-            JsonSerializer.Serialize(new TodoTask { Status = status }, GetTypeInfo<TodoTask>()),
-            Encoding.UTF8, "application/json");
+        var url = $"{BaseUrl}/me/todo/lists/{listId}/tasks/{taskId}";
+        var requestBody = JsonSerializer.Serialize(new TodoTask { Status = status }, GetTypeInfo<TodoTask>());
+
+        using var request = await CreateRequest(HttpMethod.Patch, url, cancellationToken);
+        request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
         response.EnsureSuccessStatusCode();
+
+        var updated = JsonSerializer.Deserialize(responseBody, GetTypeInfo<TodoTask>());
+        if (updated?.Status != status)
+        {
+            throw new InvalidOperationException(
+                $"Graph API returned status '{updated?.Status}' after PATCH to '{status}' for task {taskId}");
+        }
     }
 
     private async Task<HttpRequestMessage> CreateRequest(HttpMethod method, string url, CancellationToken cancellationToken)

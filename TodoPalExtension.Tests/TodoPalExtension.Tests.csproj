@@ -15,6 +15,7 @@
   <ItemGroup>
     <Compile Include="..\TodoPalExtension\Models\*.cs" Link="Models\%(Filename)%(Extension)" />
     <Compile Include="..\TodoPalExtension\GraphTodoClient.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\TodoPalExtension\TodoPalJsonContext.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
