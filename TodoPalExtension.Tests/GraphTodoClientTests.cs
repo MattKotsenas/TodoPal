@@ -151,6 +151,20 @@ public sealed class GraphTodoClientTests
     }
 
     [TestMethod]
+    public async Task CompleteTaskAsync_PatchBodyContainsOnlyStatus()
+    {
+        var handler = new FakeHttpHandler("""{ "id": "task-1", "status": "completed" }""");
+        var client = CreateClient(handler);
+
+        await client.CompleteTaskAsync("list-1", "task-1");
+
+        var body = JsonSerializer.Deserialize<JsonElement>(handler.LastRequestBody!);
+        var properties = body.EnumerateObject().Select(p => p.Name).ToList();
+        CollectionAssert.AreEquivalent(new[] { "status" }, properties,
+            $"PATCH body should contain only 'status' but contained: {string.Join(", ", properties)}");
+    }
+
+    [TestMethod]
     public async Task UncompleteTaskAsync_SendsPatchWithNotStartedStatus()
     {
         var responseJson = """{ "id": "task-1", "title": "Buy milk", "status": "notStarted" }""";

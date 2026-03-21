@@ -17,7 +17,7 @@ public sealed class TodoTask
     public string? Importance { get; set; }
 
     [JsonPropertyName("isReminderOn")]
-    public bool IsReminderOn { get; set; }
+    public bool? IsReminderOn { get; set; }
 
     [JsonPropertyName("dueDateTime")]
     public DateTimeTimeZone? DueDateTime { get; set; }
