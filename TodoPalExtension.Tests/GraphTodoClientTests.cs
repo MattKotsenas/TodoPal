@@ -74,19 +74,23 @@ public sealed class GraphTodoClientTests
         await client.GetTasksAsync("list-abc");
 
         var uri = handler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(uri.StartsWith("https://graph.microsoft.com/v1.0/me/todo/lists/list-abc/tasks?"), uri);
-        Assert.IsTrue(uri.Contains("filter=status"), uri);
+        Assert.IsTrue(uri.StartsWith("https://graph.microsoft.com/beta/me/todo/lists/list-abc/tasks?"), uri);
+        Assert.IsTrue(uri.Contains("filter=status"), $"Expected status filter in URL: {uri}");
+        Assert.IsTrue(uri.Contains("expand=singleValueExtendedProperties"), $"Expected extended properties expand in URL: {uri}");
     }
 
     [TestMethod]
-    public async Task GetTasksAsync_IncludeCompleted_NoFilter()
+    public async Task GetTasksAsync_IncludeCompleted_StillExpandsExtendedProperties()
     {
         var handler = new FakeHttpHandler("""{ "value": [] }""");
         var client = CreateClient(handler);
 
         await client.GetTasksAsync("list-abc", includeCompleted: true);
 
-        Assert.AreEqual("https://graph.microsoft.com/v1.0/me/todo/lists/list-abc/tasks", handler.LastRequest!.RequestUri!.ToString());
+        var uri = handler.LastRequest!.RequestUri!.ToString();
+        Assert.IsTrue(uri.StartsWith("https://graph.microsoft.com/beta/"), $"Expected beta URL: {uri}");
+        Assert.IsFalse(uri.Contains("filter=status"), $"Should not have status filter when includeCompleted: {uri}");
+        Assert.IsTrue(uri.Contains("expand=singleValueExtendedProperties"), $"Expected extended properties expand: {uri}");
     }
 
     [TestMethod]

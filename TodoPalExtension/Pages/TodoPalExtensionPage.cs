@@ -15,7 +15,7 @@ internal sealed partial class TodoPalExtensionPage : ListPage, IDisposable
 
     public TodoPalExtensionPage()
     {
-        Icon = new IconInfo(new FontIconData("\uE73E", "Segoe Fluent Icons")); // checkmark icon
+        Icon = IconHelpers.FromRelativePath("Assets\\TodoPal.png");
         Title = "TodoPal";
         Name = "Open";
     }
@@ -66,9 +66,11 @@ internal sealed partial class TodoPalExtensionPage : ListPage, IDisposable
                     var subtitle = FormatSubtitle(task, list);
                     var command = new ToggleCompleteCommand(_client, list.Id, task, this);
 
-                    var section = IsDueToday(task)
-                        ? "Due Today"
-                        : list.DisplayName ?? "Tasks";
+                    var section = IsInMyDay(task)
+                        ? "⭐ My Day"
+                        : IsDueToday(task)
+                            ? "Due Today"
+                            : list.DisplayName ?? "Tasks";
 
                     var item = new ListItem(command)
                     {
@@ -84,8 +86,13 @@ internal sealed partial class TodoPalExtensionPage : ListPage, IDisposable
 
             ct.ThrowIfCancellationRequested();
 
-            // Sort so "Due Today" appears first
-            _items = [.. items.OrderBy(i => ((ListItem)i).Section == "Due Today" ? 0 : 1)];
+            // Sort: My Day first, then Due Today, then everything else
+            _items = [.. items.OrderBy(i => ((ListItem)i).Section switch
+            {
+                "⭐ My Day" => 0,
+                "Due Today" => 1,
+                _ => 2
+            })];
         }
         catch (MsalUiRequiredException)
         {
@@ -201,6 +208,14 @@ internal sealed partial class TodoPalExtensionPage : ListPage, IDisposable
         return task.DueDateTime?.DateTime is { } due
             && DateTime.TryParse(due, out var dueDate)
             && dueDate.Date == DateTime.Today;
+    }
+
+    private static bool IsInMyDay(TodoTask task)
+    {
+        return task.SingleValueExtendedProperties?.Any(p =>
+            p.Id is not null
+            && p.Id.Contains("IsMyDay", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(p.Value, "true", StringComparison.OrdinalIgnoreCase)) == true;
     }
 
     private static ITag[] GetTags(TodoTask task)

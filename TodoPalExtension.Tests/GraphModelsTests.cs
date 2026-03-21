@@ -311,4 +311,48 @@ public sealed class GraphModelsTests
         CollectionAssert.AreEquivalent(new[] { "status" }, properties,
             $"Source-gen serialization should contain only 'status' but contained: {string.Join(", ", properties)}");
     }
+
+    [TestMethod]
+    public void Deserialize_Task_WithMyDayExtendedProperty()
+    {
+        var json = """
+        {
+            "id": "task-myday",
+            "title": "My Day task",
+            "status": "notStarted",
+            "importance": "normal",
+            "singleValueExtendedProperties": [
+                {
+                    "id": "String {00020329-0000-0000-C000-000000000046} Name IsMyDay",
+                    "value": "true"
+                }
+            ]
+        }
+        """;
+
+        var task = JsonSerializer.Deserialize<TodoTask>(json);
+
+        Assert.IsNotNull(task);
+        Assert.IsNotNull(task.SingleValueExtendedProperties);
+        Assert.HasCount(1, task.SingleValueExtendedProperties);
+        Assert.AreEqual("true", task.SingleValueExtendedProperties[0].Value);
+    }
+
+    [TestMethod]
+    public void Deserialize_Task_WithoutExtendedProperties_HasNullList()
+    {
+        var json = """
+        {
+            "id": "task-no-ext",
+            "title": "Regular task",
+            "status": "notStarted",
+            "importance": "normal"
+        }
+        """;
+
+        var task = JsonSerializer.Deserialize<TodoTask>(json);
+
+        Assert.IsNotNull(task);
+        Assert.IsNull(task.SingleValueExtendedProperties);
+    }
 }

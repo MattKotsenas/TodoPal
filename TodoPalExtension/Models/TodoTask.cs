@@ -30,4 +30,7 @@ public sealed class TodoTask
 
     [JsonPropertyName("lastModifiedDateTime")]
     public string? LastModifiedDateTime { get; set; }
+
+    [JsonPropertyName("singleValueExtendedProperties")]
+    public List<SingleValueExtendedProperty>? SingleValueExtendedProperties { get; set; }
 }

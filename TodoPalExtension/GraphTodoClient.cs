@@ -10,6 +10,13 @@ namespace TodoPalExtension;
 public sealed class GraphTodoClient
 {
     private const string BaseUrl = "https://graph.microsoft.com/v1.0";
+    private const string BetaUrl = "https://graph.microsoft.com/beta";
+
+    // "My Day" is stored as a MAPI extended property. The property set GUID is the
+    // PS_PUBLIC_STRINGS namespace. The exact property name may vary - we fetch all
+    // extended properties and check for a known "My Day" marker in discovery mode.
+    internal const string MyDayPropertyFilter =
+        "$expand=singleValueExtendedProperties($filter=id eq 'String {00020329-0000-0000-C000-000000000046} Name IsMyDay')";
 
     private readonly HttpClient _httpClient;
     private readonly Func<Task<string>> _getAccessToken;
@@ -38,11 +45,15 @@ public sealed class GraphTodoClient
 
     public async Task<List<TodoTask>> GetTasksAsync(string listId, bool includeCompleted = false, CancellationToken cancellationToken = default)
     {
-        var url = $"{BaseUrl}/me/todo/lists/{listId}/tasks";
+        // Use beta API to access singleValueExtendedProperties (My Day support).
+        // v1.0 does not support $expand on extended properties.
+        var queryParts = new List<string> { MyDayPropertyFilter };
         if (!includeCompleted)
         {
-            url += "?$filter=status ne 'completed'";
+            queryParts.Add("$filter=status ne 'completed'");
         }
+
+        var url = $"{BetaUrl}/me/todo/lists/{listId}/tasks?{string.Join("&", queryParts)}";
 
         return await GetAllPagesAsync(url, GetTypeInfo<GraphCollection<TodoTask>>(), cancellationToken);
     }

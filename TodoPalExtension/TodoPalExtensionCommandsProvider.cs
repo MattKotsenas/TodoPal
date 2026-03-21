@@ -14,7 +14,7 @@ public partial class TodoPalExtensionCommandsProvider : CommandProvider
     public TodoPalExtensionCommandsProvider()
     {
         DisplayName = "TodoPal";
-        Icon = new IconInfo(new FontIconData("\uE73E", "Segoe Fluent Icons")); // checkmark
+        Icon = IconHelpers.FromRelativePath("Assets\\TodoPal.png");
         _commands = [
             new CommandItem(new TodoPalExtensionPage()) { Title = DisplayName },
         ];
