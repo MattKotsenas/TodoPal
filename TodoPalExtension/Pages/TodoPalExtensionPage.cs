@@ -234,7 +234,7 @@ internal sealed partial class ToggleCompleteCommand : InvokableCommand
         Name = isCompleted ? "Mark incomplete" : "Mark complete";
         Icon = isCompleted
             ? new IconInfo(new FontIconData("\uE73E", "Segoe Fluent Icons"))  // filled checkmark
-            : new IconInfo(new FontIconData("\uF136", "Segoe Fluent Icons")); // empty circle
+            : new IconInfo(new FontIconData("\uEA3A", "Segoe Fluent Icons")); // thin circle (RadioBtnOff)
     }
 
     public override ICommandResult Invoke()
