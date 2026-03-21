@@ -34,11 +34,7 @@ if (-not $Architecture) {
 $rid = "win-$Architecture"
 $projectDir = Join-Path $PSScriptRoot "TodoPalExtension"
 
-Write-Host "Publishing TodoPal ($Configuration, $rid)..." -ForegroundColor Cyan
-dotnet publish $projectDir -r $rid -c $Configuration
-if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
-
-# Stop any running extension process before unregistering
+# Stop any running extension process before publishing (avoids file locks)
 $running = Get-Process -Name "TodoPalExtension" -ErrorAction SilentlyContinue
 if ($running) {
     Write-Host "Stopping running TodoPalExtension process..." -ForegroundColor Yellow
@@ -52,6 +48,10 @@ if ($existing) {
     Write-Host "Removing existing TodoPal registration..." -ForegroundColor Yellow
     $existing | Remove-AppxPackage
 }
+
+Write-Host "Publishing TodoPal ($Configuration, $rid)..." -ForegroundColor Cyan
+dotnet publish $projectDir -r $rid -c $Configuration
+if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 
 $tfm = "net9.0-windows10.0.26100.0"
 $manifest = Join-Path $projectDir "bin" $Configuration $tfm $rid "AppxManifest.xml"
